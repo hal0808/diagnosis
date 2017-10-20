@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src * data: gap: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+  <script src="components/loader.js"></script>
+  <script src="lib/onsenui/js/onsenui.min.js"></script>
+
+  <link rel="stylesheet" href="components/loader.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script>
+    //問題データ(json)を取得 
+    var question;   //問題データ
+    var answer;     //解答データ
+    var yes;
+    var no;
+    
+    $.getJSON('question.json',function(result){
+        question = result;
+    })
+    $.getJSON('answer.json',function(result){
+        answer = result;
+    })
+    
+    //スタートボタンが押されたとき
+    var choices;    //選択肢
+    var current;    //現在の問題番号
+    function start(){
+        choices = 0;    //結果にたどり着いた時の選択肢
+        current = 0;    //データの個数
+        
+        //問題ページ(question.html)に遷移する
+        document.getElementById("navi").pushPage("question.html");
+    }
+    
+    //問題ページに問題を表示する
+    // init:そのページを開いたとき
+    document.addEventListener('init',function(event){
+        var page = event.target;    //event.target:どのページが開かれているか
+        
+        if(page.id == "question-page"){  //questionページのとき
+            //jsonデータをページにセットする
+            var toi = "設問 "+question[current].toi;
+            page.querySelector('#toi').innerHTML = toi;
+            page.querySelector('#title').innerHTML = question[current].title;
+            //ブラケット　※原則ドットを使う
+            //var key = title;
+            //page.querySelector('#title').innerHTML = question[current].[key];
+            yes = question[current].yes;
+            no = question[current].no;
+        }
+    })
+    
+    //選択肢を押したときの処理
+    function select(choiceNo){
+        // yes,no判断
+        if(choiceNo == 1){  // yes
+            // 問題か結果か
+            if(yes<100){    // 問題
+                current = yes-1;
+                document.getElementById("navi").pushPage("question.html");
+            }else{          // 結果
+                choices=yes;
+                result();
+            }
+        }else{  // no
+            // 問題か結果か
+            if(no<100){    // 問題
+                current = no-1;
+                document.getElementById("navi").pushPage("question.html");
+            }else{          // 結果
+                choices=no;
+                result();
+            }
+        }
+    }
+    
+    //結果ページの処理
+    function result(){
+        document.getElementById("navi").pushPage("score.html").then(function(page){
+            //問題が無い場合、何問中何個正解と表示するページに遷移する
+            current = choices-101;
+            console.log(answer[current].text);
+            var show_score = answer[current].result;
+            page.querySelector("#score").innerHTML = show_score;
+            page.querySelector("#text").innerHTML = answer[current].text;
+            
+            $("#btn_return").on("click",function(){  //最初に戻るボタン
+                //top.html
+                document.getElementById("navi").resetToPage("top.html",{animation:"fade"});
+            })
+        })
+    }
+    
+    //1つ前に戻る
+    function back(){
+        document.querySelector('#navi').popPage();
+    }
+  </script>
+</head>
+<body>
+    <ons-navigator id="navi" page="top.html">
+    </ons-navigator>
+    
+</body>
+</html>
